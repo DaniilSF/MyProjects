@@ -1,0 +1,39 @@
+services:
+  db:
+    image: postgres:17.5
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dispatcher_ref_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  backend:
+    build: ./Backend
+    container_name: dispatcher-backend
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+
+  frontend:
+    build:
+      context: ./Frontend
+      args:
+        - VITE_API_URL=http://backend:8000   # понадобится, когда начнёте дергать API
+    container_name: dispatcher-frontend
+    restart: always
+    ports:
+      - "5173:80"         # внешне :5173, внутри Nginx слушает :80
+    depends_on:
+      - backend           # просто порядок старта, не «жёсткая» гарантия
+
+volumes:
+  postgres_data:

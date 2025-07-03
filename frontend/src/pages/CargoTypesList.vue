@@ -1,0 +1,1 @@
+<template><h2>Типы груза</h2></template>

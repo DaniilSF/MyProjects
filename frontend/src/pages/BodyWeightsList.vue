@@ -1,0 +1,1 @@
+<template><h2>Веса кузовов</h2></template>

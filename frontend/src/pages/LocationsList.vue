@@ -1,0 +1,1 @@
+<template><h2>Места</h2></template>

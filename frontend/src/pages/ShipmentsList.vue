@@ -1,0 +1,1 @@
+<template><h2>Отгрузки</h2></template>

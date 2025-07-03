@@ -1,0 +1,1 @@
+<template><h2>Оборудование</h2></template>
