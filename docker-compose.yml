@@ -25,15 +25,15 @@ services:
 
   frontend:
     build:
-      context: ./Frontend
+      context: ./frontend
       args:
-        - VITE_API_URL=http://backend:8000   # понадобится, когда начнёте дергать API
+        - VITE_API_URL=http://backend:8000
     container_name: dispatcher-frontend
     restart: always
     ports:
       - "5173:80"         # внешне :5173, внутри Nginx слушает :80
     depends_on:
-      - backend           # просто порядок старта, не «жёсткая» гарантия
+      - backend
 
 volumes:
   postgres_data:
