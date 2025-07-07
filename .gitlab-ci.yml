@@ -41,7 +41,7 @@ deploy-job:      # This job runs in the deploy stage.
       HOST_NAME_ii=`hostname -i`
       HOST_NAME_C=`curl ifconfig.me`
       " >> .env 
-    #
+    # 
     - docker compose up -d --build
     - echo "Application successfully deployed."
   
