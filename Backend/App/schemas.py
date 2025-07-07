@@ -51,12 +51,12 @@ class Location(BaseModel):
 # ---------- Distance ---------- #
 class Distance(BaseModel):
     id: int
-    location_from_id: int
-    location_to_id: int
+    from_location: Location        # ← вместо пары ID
+    to_location: Location
     distance_km: Decimal
     estimated_time_min: Optional[int] = None
-
     model_config = ConfigDict(from_attributes=True)
+
 
 
 # ---------- Shipment ---------- #

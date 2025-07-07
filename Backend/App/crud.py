@@ -23,7 +23,8 @@ async def get_location_by_id(location_id: int, db: AsyncSession):
 
 # === Distances ===
 async def get_all_distances(db: AsyncSession):
-    result = await db.execute(select(models.Distance))
+    result = await db.execute(
+        select(models.Distance).options(selectinload(models.Distance.from_location), selectinload(models.Distance.to_location)))
     return result.scalars().all()
 
 async def get_distance_by_id(distance_id: int, db: AsyncSession):

@@ -6,11 +6,11 @@ from .. import crud, schemas
 
 router = APIRouter()
 
-@router.get("/", response_model=List[schemas.Equipment])
+@router.get("", response_model=List[schemas.Equipment])
 async def get_all_equipment(session: AsyncSession = Depends(get_async_session)):
     return await crud.get_all_equipment(session)
 
-@router.get("/{equipment_id}", response_model=schemas.Equipment)
+@router.get("{equipment_id}", response_model=schemas.Equipment)
 async def get_equipment(equipment_id: int, session: AsyncSession = Depends(get_async_session)):
     equipment = await crud.get_equipment_by_id(equipment_id, session)
     if equipment is None:

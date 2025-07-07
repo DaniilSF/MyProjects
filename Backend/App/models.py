@@ -33,6 +33,9 @@ class Distance(Base):
     distance_km = Column(Numeric(10, 2), nullable=False)
     estimated_time_min = Column(Integer)
 
+    from_location = relationship("Location", foreign_keys=[location_from_id], lazy="joined",)
+    to_location = relationship("Location", foreign_keys=[location_to_id], lazy="joined",)
+
 
 class BodyWeight(Base):
     __tablename__ = "body_weights"
