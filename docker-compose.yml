@@ -7,7 +7,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: dispatcher_ref_db
     ports:
-      - "5482:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
@@ -17,7 +17,7 @@ services:
     container_name: dispatcher-backend
     restart: always
     ports:
-      - "8080:8000"
+      - "8001:8000"
     depends_on:
       - db
     environment:
@@ -31,7 +31,7 @@ services:
     container_name: dispatcher-frontend
     restart: always
     ports:
-      - "5183:80"         # внешне :5173, внутри Nginx слушает :80
+      - "5174:80"         # внешне :5174, внутри Nginx слушает :80
     depends_on:
       - backend
 
