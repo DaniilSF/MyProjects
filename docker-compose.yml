@@ -25,7 +25,7 @@ services:
 
   frontend:
     build:
-      context: ./Frontend
+      context: ./frontend
       args:
         - VITE_API_URL=http://backend:8000   # понадобится, когда начнёте дергать API
     container_name: dispatcher-frontend
