@@ -47,3 +47,4 @@ deploy-job:      # This job runs in the deploy stage.
   
   only:
     - master
+    - main
