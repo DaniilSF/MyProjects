@@ -14,7 +14,7 @@ services:
 
   backend:
     build: ./Backend
-    container_name: dispatcher-backend
+    # container_name: dispatcher-backend
     restart: always
     ports:
       - "8001:8000"
@@ -28,7 +28,7 @@ services:
       context: ./frontend
       args:
         - VITE_API_URL=http://backend:8000
-    container_name: dispatcher-frontend
+    # container_name: dispatcher-frontend
     restart: always
     ports:
       - "5174:80"         # внешне :5174, внутри Nginx слушает :80
