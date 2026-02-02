@@ -1,0 +1,9 @@
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: pm_frontend
+    ports:
+      - "8080:80"
+    restart: unless-stopped

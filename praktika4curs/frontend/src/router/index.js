@@ -6,11 +6,8 @@ import ImageViewerPage from "../pages/ImageViewerPage.vue";
 
 const routes = [
   { path: "/", redirect: "/projects" },
-
   { path: "/projects", component: ProjectsPage },
-
   { path: "/projects/:projectId", component: ProjectImagesPage },
-
   { path: "/projects/:projectId/images/:imageId", component: ImageViewerPage },
 ];
 

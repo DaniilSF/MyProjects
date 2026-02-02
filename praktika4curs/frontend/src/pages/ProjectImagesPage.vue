@@ -4,10 +4,9 @@ import { useRoute } from "vue-router";
 import { addImagesToProject, deleteImage, getProjectById } from "../services/storage.js";
 
 const route = useRoute();
-
 const projectId = computed(() => route.params.projectId);
-const project = ref(null);
 
+const project = ref(null);
 const errorText = ref("");
 const isUploading = ref(false);
 
@@ -16,22 +15,57 @@ function refresh() {
 }
 
 onMounted(refresh);
-
-// если пользователь сменит URL на другой projectId — обновим страницу
 watch(projectId, refresh);
 
-async function onFilesSelected(e) {
-  errorText.value = "";
-  const files = e.target.files;
+const isDragging = ref(false);
 
+function onDragOver(e) {
+  e.preventDefault();
+}
+
+async function onDrop(e) {
+  e.preventDefault();
+  isDragging.value = false;
+
+  const files = e.dataTransfer?.files;
   if (!files || files.length === 0) return;
 
+  const imageFiles = Array.from(files).filter((f) => f.type?.startsWith("image/"));
+  if (imageFiles.length === 0) {
+    errorText.value = "Нужны файлы изображений";
+    return;
+  }
+
   try {
+    errorText.value = "";
     isUploading.value = true;
-    await addImagesToProject(projectId.value, files);
-    e.target.value = ""; // чтобы можно было выбрать те же файлы ещё раз
-    refresh();            // <-- главное: обновили UI сразу
-  } catch (err) {
+    await addImagesToProject(projectId.value, imageFiles);
+    refresh();
+  } catch {
+    errorText.value = "Не удалось добавить изображения.";
+  } finally {
+    isUploading.value = false;
+  }
+}
+
+async function onFilesSelected(e) {
+  const files = e.target.files;
+  if (!files || files.length === 0) return;
+
+  const imageFiles = Array.from(files).filter((f) => f.type?.startsWith("image/"));
+  if (imageFiles.length === 0) {
+    errorText.value = "Нужны файлы изображений";
+    e.target.value = "";
+    return;
+  }
+
+  try {
+    errorText.value = "";
+    isUploading.value = true;
+    await addImagesToProject(projectId.value, imageFiles);
+    e.target.value = "";
+    refresh();
+  } catch {
     errorText.value = "Не удалось добавить изображения.";
   } finally {
     isUploading.value = false;
@@ -39,86 +73,104 @@ async function onFilesSelected(e) {
 }
 
 function onDeleteImage(imageId) {
-  const ok = confirm("Удалить изображение?");
-  if (!ok) return;
-
+  if (!confirm("Удалить изображение?")) return;
   deleteImage(projectId.value, imageId);
-  refresh(); // <-- UI обновится сразу, без F5
+  refresh();
 }
 </script>
 
 <template>
   <div>
-    <router-link to="/projects">← Назад к проектам</router-link>
-
-    <h1 style="margin-top: 12px">
-      Проект: {{ project?.name ?? "Не найден" }}
-    </h1>
-
-    <p v-if="errorText" style="color: #b00020">{{ errorText }}</p>
-
-    <div v-if="!project" style="margin-top: 16px">
-      Проект не найден. Проверь URL.
+    <router-link to="/projects">Назад к проектам</router-link>
+    <h1>Проект: {{ project?.name ?? "Не найден" }}</h1>
+    <p v-if="errorText" class="error">{{ errorText }}</p>
+    <div v-if="!project">
+      Проект не найден
     </div>
-
-    <div v-else style="margin-top: 16px">
-      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-        <label
-          style="display: inline-block; padding: 8px 12px; border: 1px solid #ccc; cursor: pointer;"
-        >
-          {{ isUploading ? "Загрузка..." : "Загрузить изображения" }}
+    <div v-else>
+      <div
+        class="dropzone"
+        :class="{ active: isDragging }"
+        @dragenter.prevent="isDragging = true"
+        @dragover="onDragOver"
+        @dragleave="isDragging = false"
+        @drop="onDrop"
+      >
+        <label class="btn">
+          {{ isUploading ? "Загрузка..." : "Загрузить" }}
           <input
+            class="hidden"
             type="file"
             accept="image/*"
             multiple
-            style="display: none"
             @change="onFilesSelected"
             :disabled="isUploading"
           />
         </label>
-
-        <span style="opacity: 0.75">
-          Всего изображений: {{ project.images.length }}
-        </span>
+        <span>или перетащите изображения сюда</span>
+        <span class="count">({{ project.images.length }})</span>
       </div>
-
-      <div
-        v-if="project.images.length"
-        style="
-          margin-top: 16px;
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-          gap: 12px;
-        "
-      >
-        <div
-          v-for="img in project.images"
-          :key="img.id"
-          style="border: 1px solid #ddd; padding: 8px;"
-        >
-          <router-link
-            :to="`/projects/${projectId}/images/${img.id}`"
-            style="text-decoration: none; color: inherit;"
-          >
-            <img
-              :src="img.dataUrl"
-              :alt="img.filename"
-              style="width: 100%; height: 120px; object-fit: cover; display: block;"
-            />
-            <div style="margin-top: 6px; font-size: 12px; word-break: break-word;">
-              {{ img.filename }}
-            </div>
+      <div v-if="project.images.length" class="grid">
+        <div v-for="img in project.images" :key="img.id" class="card">
+          <router-link :to="`/projects/${projectId}/images/${img.id}`">
+            <img :src="img.dataUrl" :alt="img.filename" class="thumb" />
+            <div class="filename">{{ img.filename }}</div>
           </router-link>
-
-          <button style="margin-top: 8px; width: 100%;" @click="onDeleteImage(img.id)">
-            Удалить
-          </button>
+          <button @click="onDeleteImage(img.id)">Удалить</button>
         </div>
       </div>
-
-      <p v-else style="margin-top: 16px; opacity: 0.8">
-        В проекте пока нет изображений. Нажми “Загрузить изображения”.
+      <p v-else>
+        Изображений нет
       </p>
     </div>
   </div>
 </template>
+
+<style scoped>
+.error {
+  color: #b00000;
+}
+.dropzone {
+  border: 2px dashed #bbb;
+  padding: 12px;
+  margin-top: 10px;
+}
+.dropzone.active {
+  background: #ededed;
+}
+.btn {
+  display: inline-block;
+  border: 1px solid #ccc;
+  padding: 6px 10px;
+  cursor: pointer;
+  margin-right: 10px;
+}
+.hidden {
+  display: none;
+}
+.count {
+  opacity: 0.8;
+  margin-left: 8px;
+}
+.grid {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 10px;
+}
+.card {
+  border: 1px solid #ddd;
+  padding: 8px;
+}
+.thumb {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+}
+.filename {
+  font-size: 12px;
+  margin-top: 6px;
+  word-break: break-word;
+}
+</style>
