@@ -1,23 +1,37 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { addImagesToProject, deleteImage, getProjectById } from "../services/storage.js";
+import { apiDeleteImage, apiGetProjectImages, apiUploadImages, apiGetProjects } from "../services/api.js";
 
 const route = useRoute();
-const projectId = computed(() => route.params.projectId);
+const projectId = computed(() => Number(route.params.projectId));
 
 const project = ref(null);
+const images = ref([]);
 const errorText = ref("");
 const isUploading = ref(false);
+const isDragging = ref(false);
 
-function refresh() {
-  project.value = getProjectById(projectId.value);
+async function loadProject() {
+  // backend не имеет GET /projects/{id}, поэтому берём список и ищем нужный
+  const list = await apiGetProjects();
+  return list.find((p) => p.id === projectId.value) || null;
+}
+
+async function refresh() {
+  try {
+    errorText.value = "";
+    project.value = await loadProject();
+    if (!project.value) return;
+
+    images.value = await apiGetProjectImages(projectId.value);
+  } catch {
+    errorText.value = "Не удалось загрузить проект или изображения";
+  }
 }
 
 onMounted(refresh);
 watch(projectId, refresh);
-
-const isDragging = ref(false);
 
 function onDragOver(e) {
   e.preventDefault();
@@ -39,8 +53,8 @@ async function onDrop(e) {
   try {
     errorText.value = "";
     isUploading.value = true;
-    await addImagesToProject(projectId.value, imageFiles);
-    refresh();
+    await apiUploadImages(projectId.value, imageFiles);
+    await refresh();
   } catch {
     errorText.value = "Не удалось добавить изображения.";
   } finally {
@@ -62,9 +76,9 @@ async function onFilesSelected(e) {
   try {
     errorText.value = "";
     isUploading.value = true;
-    await addImagesToProject(projectId.value, imageFiles);
+    await apiUploadImages(projectId.value, imageFiles);
     e.target.value = "";
-    refresh();
+    await refresh();
   } catch {
     errorText.value = "Не удалось добавить изображения.";
   } finally {
@@ -72,10 +86,14 @@ async function onFilesSelected(e) {
   }
 }
 
-function onDeleteImage(imageId) {
+async function onDeleteImage(imageId) {
   if (!confirm("Удалить изображение?")) return;
-  deleteImage(projectId.value, imageId);
-  refresh();
+  try {
+    await apiDeleteImage(imageId);
+    await refresh();
+  } catch {
+    errorText.value = "Не удалось удалить изображение.";
+  }
 }
 </script>
 
@@ -108,12 +126,12 @@ function onDeleteImage(imageId) {
           />
         </label>
         <span>или перетащите изображения сюда</span>
-        <span class="count">({{ project.images.length }})</span>
+        <span class="count">({{ images.length }})</span>
       </div>
-      <div v-if="project.images.length" class="grid">
-        <div v-for="img in project.images" :key="img.id" class="card">
+      <div v-if="images.length" class="grid">
+        <div v-for="img in images" :key="img.id" class="card">
           <router-link :to="`/projects/${projectId}/images/${img.id}`">
-            <img :src="img.dataUrl" :alt="img.filename" class="thumb" />
+            <img :src="img.url" :alt="img.filename" class="thumb" />
             <div class="filename">{{ img.filename }}</div>
           </router-link>
           <button @click="onDeleteImage(img.id)">Удалить</button>

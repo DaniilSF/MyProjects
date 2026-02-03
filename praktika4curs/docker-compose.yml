@@ -1,4 +1,33 @@
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: pm_db
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pm_db_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: pm_backend
+    environment:
+      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/postgres
+      UPLOAD_DIR: /data/uploads
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - pm_uploads:/data/uploads
+    restart: unless-stopped
+
   frontend:
     build:
       context: ./frontend
@@ -6,4 +35,10 @@ services:
     container_name: pm_frontend
     ports:
       - "8080:80"
+    depends_on:
+      - backend
     restart: unless-stopped
+
+volumes:
+  pm_db_data:
+  pm_uploads:

@@ -79,3 +79,23 @@ export function deleteImage(projectId, imageId) {
   project.images = project.images.filter((x) => x.id !== imageId);
   save(projects);
 }
+export function getImageById(projectId, imageId) {
+  const project = getProjectById(projectId);
+  if (!project) return null;
+  return project.images.find((img) => img.id === imageId) || null;
+}
+function annKey(imageId) {
+  return `pm_annotations_${imageId}`;
+}
+export function getAnnotations(imageId) {
+  const raw = localStorage.getItem(annKey(imageId));
+  if (!raw) return [];
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+export function saveAnnotations(imageId, annotations) {
+  localStorage.setItem(annKey(imageId), JSON.stringify(annotations));
+}

@@ -1,35 +1,50 @@
 <script setup>
 import { onMounted, ref } from "vue";
-import { createProject, deleteProject, getProjects } from "../services/storage.js";
+import { apiCreateProject, apiDeleteProject, apiGetProjects } from "../services/api.js";
 
 const projects = ref([]);
 const newName = ref("");
 const errorText = ref("");
+const isLoading = ref(false);
 
-function refresh() {
-  projects.value = getProjects();
+async function refresh() {
+  try {
+    isLoading.value = true;
+    projects.value = await apiGetProjects();
+  } catch (e) {
+    errorText.value = "Не удалось загрузить проекты";
+  } finally {
+    isLoading.value = false;
+  }
 }
 
-function onCreate() {
+async function onCreate() {
   const name = newName.value.trim();
   if (!name) {
     errorText.value = "Введите название проекта";
     return;
   }
+
   try {
     errorText.value = "";
-    createProject(name);
+    await apiCreateProject(name);
     newName.value = "";
-    refresh();
+    await refresh();
   } catch {
     errorText.value = "Не удалось создать проект";
   }
 }
 
-function onDelete(id) {
+async function onDelete(id) {
   if (!confirm("Удалить проект? Все изображения пропадут")) return;
-  deleteProject(id);
-  refresh();
+
+  try {
+    errorText.value = "";
+    await apiDeleteProject(id);
+    await refresh();
+  } catch {
+    errorText.value = "Не удалось удалить проект";
+  }
 }
 
 onMounted(refresh);
@@ -57,7 +72,7 @@ onMounted(refresh);
           {{ p.name }}
         </router-link>
         <span>
-          ({{ new Date(p.createdAt).toLocaleString() }})
+          ({{ new Date(p.created_at).toLocaleString() }})
         </span>
         <button @click="onDelete(p.id)">Удалить</button>
       </li>
