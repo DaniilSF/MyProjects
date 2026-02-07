@@ -48,3 +48,31 @@ export async function apiUploadImages(projectId, files) {
 export async function apiDeleteImage(imageId) {
   return httpJson(`${API_BASE}/images/${imageId}`, { method: "DELETE" });
 }
+
+export async function apiGetAnnotations(imageId) {
+  return httpJson(`${API_BASE}/images/${imageId}/annotations`);
+}
+
+export async function apiSaveAnnotations(imageId, boxes) {
+  const payload = {
+    annotations: (boxes ?? []).map((b) => ({
+      x: b.x,
+      y: b.y,
+      w: b.w,
+      h: b.h,
+      class_name: b.className,
+    })),
+  };
+
+  return httpJson(`${API_BASE}/images/${imageId}/annotations`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function apiPredict(imageId) {
+  return httpJson(`${API_BASE}/predict/${imageId}`, {
+    method: "POST",
+  });
+}
